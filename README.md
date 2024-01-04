@@ -1,18 +1,9 @@
-# globot
+# uxbot
 
-With GPT-4V, we can finally complete the original vision of [natbot](https://github.com/nat/natbot).
+[natbot](https://github.com/nat/natbot) and [globot](https://github.com/Globe-Engineer/globot) were instrumental in building UXbot. This bot helps test your UI/UX. Currently, it is a prototype but given enough demand, I will add more features to it.
 
-Help solve general agents by contributing to this repo!
+Skipped the requirements.txt, to install required packages, run:
 
-**Ideas for Improvement**
-- Scrolling (easy to add, but likely to cause divergence)
-- Better context management (learning from mistakes, more descriptive history)
-- Masking the image with node IDs
-- Better DOM parsing (please submit issues/PRs!)
-- More explicit planning
-- Data collection and fine-tuning
-
-*NOTE:* Remember to use the latest release of the openai API for the vision model:
-```bash
-pip install --upgrade openai
+```
+pip install -r requirements.txt
 ```

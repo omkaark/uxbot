@@ -1,20 +1,17 @@
-import base64
 import json
 import re
 import sys
+import os
 import traceback
 import time
-from io import BytesIO
 from functools import partial
 
 from openai import OpenAI
 from globot import Globot
 
-
-USE_VISION = False
-IMG_RES = 768
 MAX_RETRIES = 3
 
+os.makedirs('run_artifacts', exist_ok=True)
 
 def _fake_func(name, **kwargs):
     return name, kwargs
@@ -49,14 +46,7 @@ FUNCTIONS = {
 }
 
 
-def choose_action(objective, messages, img, inputs, clickables):
-    if USE_VISION:
-        W, H = img.size
-        img = img.resize((IMG_RES, int(IMG_RES* H/W)))
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-
+def choose_action(objective, messages, inputs, clickables):
     # Wrap each element in a <node> tag with an id and clickable/inputable attributes
     s = ""
     for i in inputs.keys() | clickables.keys():
@@ -75,10 +65,10 @@ def choose_action(objective, messages, img, inputs, clickables):
     html_description = s
 
     # log for debug
-    with open('html_description.txt', 'w') as f:
+    with open('run_artifacts/html_description.txt', 'w') as f:
         f.write(html_description)
 
-    client = OpenAI()
+    client = OpenAI(api_key='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')
 
     output_format = """\
 ## Reflection
@@ -121,11 +111,7 @@ Call ONE of the following functions:
 
     user_message = {
         'role': 'user',
-        'content': user_prompt if not USE_VISION else [
-            {'type': 'text', 'text': 'This is an image of the browser.'},
-            {'type': 'image_url', 'image_url': f'data:image/png;base64,{img_base64}'},
-            {'type': 'text', 'text': user_prompt},
-        ]
+        'content': user_prompt
     }
     messages.append(user_message)
 
@@ -133,7 +119,7 @@ Call ONE of the following functions:
     kwargs = {}
     while retries < MAX_RETRIES:
         response = client.chat.completions.create(
-            model="gpt-4-vision-preview" if USE_VISION else "gpt-4-1106-preview",
+            model="gpt-4-1106-preview",
             messages=messages,
             temperature=0.0,
             max_tokens=500,
@@ -150,7 +136,7 @@ Call ONE of the following functions:
         print()
         messages.append({'role': 'assistant', 'content': response_message})
 
-        with open('messages.txt', 'w') as f:
+        with open('run_artifacts/messages.txt', 'w') as f:
             json.dump(messages, f, indent=4)
         
         try:
@@ -183,16 +169,17 @@ Call ONE of the following functions:
     
 
 def main(force_run=False):
+    start_url = input("Your webapp link?\n> ") or 'https://www.google.com/'
     objective = input("What is your objective?\n> ")
     
     bot = Globot()
-    bot.go_to_page('https://www.google.com/')
+    bot.go_to_page(start_url)
 
     messages = []
     while True:
         try:
-            img, inputs, clickables = bot.crawl()
-            func, args = choose_action(objective, messages, img, inputs, clickables)
+            inputs, clickables = bot.crawl()
+            func, args = choose_action(objective, messages, inputs, clickables)
         except Exception as e:
             print(e)
             traceback.print_exc()

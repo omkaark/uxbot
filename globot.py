@@ -1,17 +1,12 @@
-import io
-import sys
 import time
 import json
-from PIL import Image
 from playwright.sync_api import sync_playwright
 
 
 VOID_ELEMENTS = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'}
 READABLE_ATTRIBUTES = {'title', 'alt', 'href', 'placeholder', 'label', 'value', 'caption', 'summary', 'aria-label', 'aria-describedby', 'datetime', 'download', 'selected', 'checked', 'type'}
-
 UNCLICKABLE_ELEMENTS = {'html', 'head', 'body'}
 CLICKABLE_ELEMENTS = {'a', 'button', 'img', 'details', 'summary'}
-
 INPUT_ELEMENTS = {'input', 'textarea', 'select', 'option'}
 
 
@@ -115,7 +110,7 @@ class Globot:
         print()
 
     def go_to_page(self, url):
-        self.page.goto(url=url if "://" in url else "https://" + url, timeout=10000)
+        self.page.goto(url=url if "://" in url else "https://" + url, timeout=1000000)
         self.client = self.page.context.new_cdp_session(self.page)
         self.wait_for_load()
 
@@ -152,14 +147,11 @@ class Globot:
         self.wait_for_load()
 
     def crawl(self):
-
-        screenshot = Image.open(io.BytesIO(self.page.screenshot())).convert("RGB")
-
         dom = self.client.send(
             "DOMSnapshot.captureSnapshot",
             {"computedStyles": [], "includeDOMRects": True, "includePaintOrder": True},
         )
-        with open("dom.json", "w") as f:
+        with open("run_artifacts/dom.json", "w") as f:
             f.write(json.dumps(dom, indent=4))
 
         dom_strings = dom['strings']
@@ -198,11 +190,9 @@ class Globot:
 
             if i in dom_nodes['inputChecked']['index']:
                 node.inputChecked = True
-                # TODO: set checked attribute in <input> tags
 
             if i in dom_nodes['optionSelected']['index']:
                 node.optionSelected = True
-                # TODO: set selected attribute in <option> tags
 
             nodes.append(node)
 
@@ -236,4 +226,4 @@ class Globot:
         
         find_interactive_elements(root)
 
-        return screenshot, input_elements, clickable_elements
+        return input_elements, clickable_elements
