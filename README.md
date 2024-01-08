@@ -7,3 +7,9 @@ Skipped the requirements.txt, to install required packages, run:
 ```
 pip install -r requirements.txt
 ```
+
+Then run:
+
+```
+python uxbot.py
+```
