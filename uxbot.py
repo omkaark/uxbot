@@ -46,7 +46,7 @@ FUNCTIONS = {
 }
 
 
-def choose_action(objective, messages, inputs, clickables):
+def choose_action(objective, user_persona, messages, inputs, clickables):
     # Wrap each element in a <node> tag with an id and clickable/inputable attributes
     s = ""
     for i in inputs.keys() | clickables.keys():
@@ -68,7 +68,7 @@ def choose_action(objective, messages, inputs, clickables):
     with open('run_artifacts/html_description.txt', 'w') as f:
         f.write(html_description)
 
-    client = OpenAI(api_key='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')
+    client = OpenAI()
 
     output_format = """\
 ## Reflection
@@ -92,6 +92,7 @@ Call ONE of the following functions:
             'role': 'system',
             'content': (
                 f'Your objective is: "{objective}"\n'
+                f'Your user persona is: "{user_persona}", make sure your reflections match your persona\'s personality\n'
                 "You are given a browser where you can either go back a page, scroll up/down, click, or type into <node> elements on the page.\n"
                 "If you believe you have accomplished your objective, call the set_objective_complete() function to finish your task.\n"
                 "You can only click on nodes with clickable=True, or type into nodes with inputable=True.\n"
@@ -169,9 +170,9 @@ Call ONE of the following functions:
     
 
 def main(force_run=False):
-    start_url = input("Your webapp link?\n> ") or 'https://www.google.com/'
+    start_url = input("Your webapp URL?\n> ") or 'https://www.google.com/'
+    user_persona = input("Your user persona?\n> ") or ''
     objective = input("What is your objective?\n> ")
-    
     bot = Globot()
     bot.go_to_page(start_url)
 
@@ -179,7 +180,7 @@ def main(force_run=False):
     while True:
         try:
             inputs, clickables = bot.crawl()
-            func, args = choose_action(objective, messages, inputs, clickables)
+            func, args = choose_action(objective, user_persona, messages, inputs, clickables)
         except Exception as e:
             print(e)
             traceback.print_exc()
